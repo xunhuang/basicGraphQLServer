@@ -42,9 +42,20 @@ const typeDefs = gql`
     user: User!
     likes: Int!
   }
+
+  input TweetInput {
+    text: String!
+    userId: String!
+  }
+
+
   type Query {
     tweets: [Tweets]
     user(id: String!): User
+  }
+
+  type Mutation {
+     createTweet(input: TweetInput): Tweets
   }
   `;
 
@@ -98,6 +109,22 @@ const resolvers = {
         throw new ApolloError(error);
       }
     }
+  },
+  Mutation: {
+    createTweet:
+      async (_: any, input: any, context: any) => {
+        try {
+          let ref = admin.firestore().collection("tweets").doc();
+          const data = {
+            id: ref.id,
+            ...input.input
+          };
+          await ref.set(data);
+          return data as Tweet;
+        } catch (error) {
+          throw new ApolloError(error);
+        }
+      },
   }
 };
 
