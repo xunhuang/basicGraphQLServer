@@ -23,6 +23,11 @@ interface Tweet {
   userId: string;
 }
 
+interface TweetInput {
+  text: string;
+  userId: string;
+}
+
 // Type definitions define the "shape" of your data and specify
 // which ways the data can be fetched from the GraphQL server.
 const typeDefs = gql`
@@ -40,14 +45,13 @@ const typeDefs = gql`
     text: String!
     userId: String!
     user: User!
-    likes: Int!
+    likes: Int
   }
 
   input TweetInput {
     text: String!
-    userId: String!
+    userId: String
   }
-
 
   type Query {
     tweets: [Tweets]
@@ -56,6 +60,7 @@ const typeDefs = gql`
 
   type Mutation {
      createTweet(input: TweetInput): Tweets
+     updateTweet(id: ID!, input: TweetInput): Tweets
   }
   `;
 
@@ -121,6 +126,26 @@ const resolvers = {
           };
           await ref.set(data);
           return data as Tweet;
+        } catch (error) {
+          throw new ApolloError(error);
+        }
+      },
+    updateTweet:
+      async (_: any, input: any, context: any) => {
+        try {
+          let param = input.input as TweetInput;
+          let myid = input.id as string;
+          let doc = await admin.firestore().collection("tweets").doc(myid).get();
+          // above throws if it can't find the item. 
+
+          const data = {
+            ...doc.data(),
+            ...input.input
+          };
+
+          await admin.firestore().collection("tweets").doc(myid).update(data);
+          return data as TweetInput;
+
         } catch (error) {
           throw new ApolloError(error);
         }
